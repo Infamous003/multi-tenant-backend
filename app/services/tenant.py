@@ -1,6 +1,7 @@
 from sqlmodel import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.db.models.tenants import Tenant
+from app.db.models.api_key import APIKey
 from app.schemas.tenants import TenantCreate
 from app.core.security import generate_api_key, hash_api_key
 from app.core.logging import get_logger
@@ -47,6 +48,12 @@ class TenantService:
         try:
             self.db.add(new_tenant)
             self.db.flush()
+
+            api_key_obj = APIKey(
+                tenant_id=new_tenant.id,
+                api_key_hash=hashed_api_key,
+            )
+            self.db.add(api_key_obj)
             self.db.commit()
             self.db.refresh(new_tenant)
 
