@@ -2,10 +2,12 @@ from sqlmodel import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.db.models.tenants import Tenant
 from app.db.models.api_key import APIKey
-from app.schemas.tenants import TenantCreate
+from app.schemas.tenants import TenantCreate, TenantUpdate
 from app.core.security import generate_api_key, hash_api_key
 from app.core.logging import get_logger
 from app.services.usage import UsageService
+from app.domain.exceptions import TenantNotFound
+from datetime import datetime, timezone
 
 
 class TenantService:
@@ -66,4 +68,53 @@ class TenantService:
         except SQLAlchemyError:
             self.db.rollback()
             self.logger.exception("Failed to create tenant")
+            raise
+    
+    def update_tenant_usage(self, tenant_id: int, payload: TenantUpdate) -> Tenant:
+        """
+        Update the usage details of an existing tenant.
+
+        Args:
+            tenant_id (int): ID of the tenant to update.
+            payload (TenantUpdate): Data for updating the tenant.
+
+        Returns:
+            Tenant: The updated Tenant object.
+        
+        Raises:
+            SQLAlchemyError: If database operation fails.
+            TenantNotFound: If the tenant does not exist.
+        """
+
+        self.logger.info(
+            "Updating tenant usage",
+            tenant_id=tenant_id,
+            plan_name=payload.plan_name,
+            monthly_usage_limit=payload.monthly_usage_limit,
+        )
+
+        tenant = self.db.get(Tenant, tenant_id)
+        if not tenant:
+            self.logger.error("Tenant not found", tenant_id=tenant_id)
+            raise TenantNotFound("Tenant not found")
+
+        if payload.plan_name is not None:
+            tenant.plan_name = payload.plan_name
+        if payload.monthly_usage_limit is not None:
+            tenant.monthly_usage_limit = payload.monthly_usage_limit
+
+        tenant.updated_at = datetime.now(timezone.utc)
+        try:
+            self.db.commit()
+            self.db.refresh(tenant)
+
+            self.logger.info(
+                "Tenant usage updated successfully",
+                tenant_id=tenant.id,
+                monthly_usage_limit=tenant.monthly_usage_limit,
+            )
+            return tenant
+        except SQLAlchemyError:
+            self.db.rollback()
+            self.logger.exception("Failed to update tenant usage", tenant_id=tenant_id)
             raise

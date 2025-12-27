@@ -4,6 +4,7 @@ from app.core.config import settings
 from app.db.db import wait_for_db
 from app.core.logging import get_logger
 from app.api.routers import tenants
+from app.api.routers import usage
 
 logger = get_logger(__name__)
 
@@ -18,6 +19,10 @@ app = FastAPI(app_name=settings.APP_NAME, lifespan=lifespan)
 app.include_router(
     prefix="/api/v1",
     router=tenants.router,
+)
+app.include_router(
+    prefix="/api/v1",
+    router=usage.router,
 )
 
 @app.get("/")
