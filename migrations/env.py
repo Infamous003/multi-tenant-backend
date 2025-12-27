@@ -8,6 +8,7 @@ import os
 from alembic import context
 from sqlmodel import SQLModel
 from app.db.models.tenants import Tenant
+from app.db.models.api_key import APIKey
 
 load_dotenv()
 
