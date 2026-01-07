@@ -159,3 +159,31 @@ This project was built to demonstrate:
 * Practical backend tradeoffs for usage-metered APIs
 
 It is intended as a learning and portfolio project rather than a production SaaS system.
+
+## Set up
+
+**Make sure docker and make is installed**
+
+1. Clone the repo and change dir
+```bash
+git clone git@github.com:Infamous003/multi-tenant-backend.git
+
+cd multi-tenant-backend
+```
+
+2. Start the app
+```bash
+make start
+```
+
+This will start the postgres db, do migrations, and start the api
+
+3. Server should be running at:
+```bash
+http://127.0.0.1:8000/
+```
+
+Swagger docs:
+```bash
+http://127.0.0.1:8000/docs
+```
