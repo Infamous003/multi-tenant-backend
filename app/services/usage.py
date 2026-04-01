@@ -61,7 +61,7 @@ class UsageService:
             SQLAlchemyError: If database operation fails.
         """
 
-        self.logger.info("Resetting monthly usage", tenant_id=tenant_id)
+        self.logger.info(f"Resetting monthly usage tenant_id={tenant_id}")
         now = datetime.now(timezone.utc)
 
         try:
@@ -81,10 +81,10 @@ class UsageService:
             self.db.commit()
             self.db.refresh(tenant)
 
-            self.logger.info("Reset tenant usage", extra={"tenant_id": tenant_id})
+            self.logger.info(f"Reset tenant usage tenant_id={tenant_id}")
             return tenant
         except SQLAlchemyError:
-            self.logger.exception("Failed to reset monthly usage", tenant_id=tenant_id)
+            self.logger.exception(f"Failed to reset monthly usage tenant_id={tenant_id}")
             raise
     
     def get_tenant_usage(self, tenant_id: int) -> Tenant:
@@ -101,15 +101,15 @@ class UsageService:
             TenantNotFound: If the tenant does not exist
         """
 
-        self.logger.info("Retrieving tenant usage", tenant_id=tenant_id)
+        self.logger.info(f"Retrieving tenant usage tenant_id={tenant_id}")
 
         tenant = self.db.get(Tenant, tenant_id)
 
         if not tenant:
-            self.logger.warning("Tenant not found", tenant_id=tenant_id)
+            self.logger.warning(f"Tenant not found tenant_id={tenant_id}")
             raise TenantNotFound()
 
-        self.logger.info("Retrieved tenant usage", tenant_id=tenant_id)
+        self.logger.info(f"Retrieved tenant usage tenant_id={tenant_id}")
         return tenant
     
     def increment_tenant_usage(self, tenant_id: int, amount: int) -> Tenant:
@@ -132,10 +132,7 @@ class UsageService:
             SQLAlchemyError: if database operation fails.
         """
 
-        self.logger.info(
-            "Incrementing tenant usage", 
-            extra={"tenant_id": tenant_id, "amount": amount}
-        )
+        self.logger.info(f"Incrementing tenant usage tenant_id={tenant_id} amount={amount}")
 
         now = datetime.now(timezone.utc)
 
@@ -152,10 +149,7 @@ class UsageService:
                 raise TenantNotFound()
 
             if now >= tenant.period_end:
-                self.logger.info(
-                    "New month detected, resetting usage",
-                    extra={"tenant_id": tenant_id},
-                )
+                self.logger.info(f"New month detected, resetting usage tenant_id={tenant_id}")
                 period_start, period_end = self.get_current_month_period()
                 tenant.current_usage = 0
                 tenant.period_start = period_start
@@ -170,18 +164,9 @@ class UsageService:
             self.db.commit()
             self.db.refresh(tenant)
 
-            self.logger.info(
-                "Incremented tenant usage",
-                extra={
-                    "tenant_id": tenant_id,
-                    "current_usage": tenant.current_usage,
-                },
-            )
+            self.logger.info(f"Incremented tenant usage tenant_id={tenant_id} current_usage={tenant.current_usage}")
             return tenant
         except SQLAlchemyError:
             self.db.rollback()
-            self.logger.exception(
-                "Failed to increment tenant usage", 
-                extra={"tenant_id": tenant_id}
-            )
+            self.logger.exception(f"Failed to increment tenant usage tenant_id={tenant_id}")
             raise

@@ -29,10 +29,7 @@ class TenantService:
             SQLAlchemyError: If database operation fails.
         """
 
-        self.logger.info(
-            "Creating tenant", 
-            plan=payload.plan_name,
-        )
+        self.logger.info(f"Creating tenant plan={payload.plan_name}")
 
         period_start, period_end = UsageService.get_current_month_period()
 
@@ -59,10 +56,7 @@ class TenantService:
             self.db.commit()
             self.db.refresh(new_tenant)
 
-            self.logger.info(
-                "Tenant created successfully in DB",
-                tenant_id=new_tenant.id,
-            )
+            self.logger.info(f"Tenant created successfully in DB tenant_id={new_tenant.id}")
 
             return new_tenant, plain_api_key
         except SQLAlchemyError:
@@ -86,16 +80,11 @@ class TenantService:
             TenantNotFound: If the tenant does not exist.
         """
 
-        self.logger.info(
-            "Updating tenant usage",
-            tenant_id=tenant_id,
-            plan_name=payload.plan_name,
-            monthly_usage_limit=payload.monthly_usage_limit,
-        )
+        self.logger.info(f"Updating tenant usage tenant_id={tenant_id} plan_name={payload.plan_name} monthly_usage_limit={payload.monthly_usage_limit}")
 
         tenant = self.db.get(Tenant, tenant_id)
         if not tenant:
-            self.logger.error("Tenant not found", tenant_id=tenant_id)
+            self.logger.error(f"Tenant not found f{tenant_id}")
             raise TenantNotFound("Tenant not found")
 
         if payload.plan_name is not None:
@@ -108,13 +97,9 @@ class TenantService:
             self.db.commit()
             self.db.refresh(tenant)
 
-            self.logger.info(
-                "Tenant usage updated successfully",
-                tenant_id=tenant.id,
-                monthly_usage_limit=tenant.monthly_usage_limit,
-            )
+            self.logger.info(f"Tenant usage updated successfully tenant_id={tenant_id} monthly_usage_limit={tenant.monthly_usage_limit}")
             return tenant
         except SQLAlchemyError:
             self.db.rollback()
-            self.logger.exception("Failed to update tenant usage", tenant_id=tenant_id)
+            self.logger.exception(f"Failed to update tenant usage tenant_id={tenant_id}")
             raise
